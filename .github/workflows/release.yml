@@ -22,6 +22,11 @@ jobs:
       - name: Install halibut
         run: brew install halibut
 
+      - name: Add upstream remote and fetch
+        run: |
+          git remote add upstream https://git.tartarus.org/simon/puzzles.git
+          git fetch upstream
+
       - name: Resolve version
         id: version
         run: |
@@ -30,8 +35,10 @@ jobs:
           elif [[ -n "${{ inputs.version }}" ]]; then
             v="${{ inputs.version }}"
           else
-            sha=$(git rev-parse --short HEAD)
-            v="$(date -u +%Y.%m.%d)-$sha"
+            base=$(git merge-base HEAD upstream/main)
+            d=$(git log -1 --format=%cd --date=format:%Y%m%d "$base")
+            n=$(git rev-list --count "$base..HEAD")
+            v="0.${d}.${n}"
           fi
           echo "version=$v" >> "$GITHUB_OUTPUT"
           echo "Version: $v"

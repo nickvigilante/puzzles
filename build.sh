@@ -6,8 +6,18 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BUILD_DIR="$REPO_ROOT/build/cmake"
 
-GIT_SHA="$(git -C "$REPO_ROOT" rev-parse --short HEAD)"
-VERSION="${VERSION:-$(date -u +%Y.%m.%d)-${GIT_SHA}}"
+if [[ -z "${VERSION:-}" ]]; then
+  if ! git -C "$REPO_ROOT" rev-parse --verify upstream/main >/dev/null 2>&1; then
+    echo "error: upstream/main ref not found. add the upstream remote and fetch:" >&2
+    echo "  git remote add upstream https://git.tartarus.org/simon/puzzles.git" >&2
+    echo "  git fetch upstream" >&2
+    exit 1
+  fi
+  upstream_base=$(git -C "$REPO_ROOT" merge-base HEAD upstream/main)
+  upstream_date=$(git -C "$REPO_ROOT" log -1 --format=%cd --date=format:%Y%m%d "$upstream_base")
+  patch_count=$(git -C "$REPO_ROOT" rev-list --count "$upstream_base..HEAD")
+  VERSION="0.${upstream_date}.${patch_count}"
+fi
 
 if ! command -v halibut >/dev/null 2>&1; then
   echo "error: halibut not found. install with: brew install halibut" >&2
