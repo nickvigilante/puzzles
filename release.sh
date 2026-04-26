@@ -11,8 +11,8 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-UPSTREAM_PIN="$(tr -d '[:space:]' < "$REPO_ROOT/UPSTREAM_PIN")"
-VERSION="${VERSION:-$(date -u +%Y.%m.%d)-${UPSTREAM_PIN:0:7}}"
+GIT_SHA="$(git -C "$REPO_ROOT" rev-parse --short HEAD)"
+VERSION="${VERSION:-$(date -u +%Y.%m.%d)-${GIT_SHA}}"
 export VERSION
 
 : "${DEVELOPER_ID_APPLICATION:?must be set, e.g. 'Developer ID Application: Your Name (TEAMID)'}"

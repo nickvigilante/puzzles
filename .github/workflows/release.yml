@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version override (default: <date>-<upstream-short-sha>)'
+        description: 'Version override (default: <date>-<git-short-sha>)'
         required: false
 
 jobs:
@@ -16,6 +16,8 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Install halibut
         run: brew install halibut
@@ -28,8 +30,8 @@ jobs:
           elif [[ -n "${{ inputs.version }}" ]]; then
             v="${{ inputs.version }}"
           else
-            pin=$(tr -d '[:space:]' < UPSTREAM_PIN)
-            v="$(date -u +%Y.%m.%d)-${pin:0:7}"
+            sha=$(git rev-parse --short HEAD)
+            v="$(date -u +%Y.%m.%d)-$sha"
           fi
           echo "version=$v" >> "$GITHUB_OUTPUT"
           echo "Version: $v"
@@ -75,7 +77,7 @@ jobs:
           {
             echo "## Puzzles $v"
             echo
-            echo "Built from upstream commit \`$(tr -d '[:space:]' < UPSTREAM_PIN)\`."
+            echo "Built from commit \`$(git rev-parse HEAD)\`."
             echo
             echo "**SHA-256:** \`$sha\`"
           } > release-notes.md
